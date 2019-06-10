@@ -32,11 +32,11 @@ process getGeneticMap {
    file genetic_map_tgz
    
    output:
-   file genetic_map_dir
+   file 'genetic_map' into genetic_map_dir
    
    """
-   mkdir ${genetic_map_dir}
-   tar xfz ${genetic_map_tgz} -C ${genetic_map_dir}
+   mkdir genetic_map
+   tar xfz ${genetic_map_tgz} -C genetic_map
    """
 
 }
