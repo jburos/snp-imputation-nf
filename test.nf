@@ -43,15 +43,15 @@ process getGeneticMap {
    """
 }
 
-# make channel from getGeneticMap 
+// make channel from getGeneticMap 
 genetic_map_dir = Channel.fromPath('genetic_map')
-# TODO split dbpath inputs into per-chrom objects
-#    .map { file ->
-#        def key = file.name.toString().tokenize('_').get(0)
-#        return tuple(key, file)
-#     }
-#    .groupTuple()
-#    .set{ groups_ch }
+// TODO split dbpath inputs into per-chrom objects
+//    .map { file ->
+//        def key = file.name.toString().tokenize('_').get(0)
+//        return tuple(key, file)
+//     }
+//    .groupTuple()
+//    .set{ groups_ch }
 
 process splitChrs {
 
