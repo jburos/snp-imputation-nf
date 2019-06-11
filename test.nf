@@ -1,9 +1,9 @@
 params.bedFile = 'TODO'
 params.famFile = 'TODO'
 params.bimFile = 'TODO'
-params.geneticMapTgz = 'TODO'
 params.outdir = "imputation-results" 
 params.chromosomeSizesFile = 'b37.chrom.sizes'
+params.referenceBase = 'ALL.integrated_phase1_SHAPEIT_16-06-14.nomono'
 params.referenceHapsFilePattern = "ALL.chr%s.integrated_phase1_v3.20101123.snps_indels_svs.genotypes.nomono.haplotypes.gz"
 params.referenceLegendFilePattern = "ALL.chr%s.integrated_phase1_v3.20101123.snps_indels_svs.genotypes.nomono.legend.gz"
 params.referenceGeneticMapPattern = "genetic_map_chr%s_combined_b37.txt"
@@ -13,20 +13,24 @@ bedFileChan = Channel.fromPath(params.bedFile)
 famFileChan = Channel.fromPath(params.famFile)
 bimFileChan = Channel.fromPath(params.bimFile)
 
+
 chromosomesList = 1..22
 
-genetic_map_tgz = file(params.geneticMapTgz)
+refChannel = Channel.fromPath(params.referenceBase)
 
 println """\
          I M P U T E 2 - N F   P I P E L I N E    
          ===================================
          bedfile      : ${params.bedFile}
-         geneticMap   : ${params.geneticMapTgz}
+         geneticMap   : ${params.referenceBase}
          outdir       : ${params.outdir}
          """
          .stripIndent()
 
 process getGeneticMap {
+   publishDir path: "${params.outdir}/genetic_map",
+              saveAs: it,
+              mode: 'copy'
 
    container 'jackinovik/docker-impute2'
    
@@ -34,7 +38,7 @@ process getGeneticMap {
    file genetic_map_tgz
    
    output:
-   publishDir "${params.outdir}/genetic_map", pattern: "*"
+   file "*" into genetic_map_files
    
    """
    tar xfz ${genetic_map_tgz}
@@ -81,7 +85,7 @@ process shapeitCheck {
 
   input:
   set val(chromosome), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") from perChromChan
-  file db_path from genetic_map_dir
+  file db_path from refChannel
 
   output:
   set val(chromosome), file("chr${chromosome}.alignments.log"), file("chr${chromosome}.alignments.snp.strand.exclude"), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") into shapitCheckChan
