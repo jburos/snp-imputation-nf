@@ -57,7 +57,7 @@ RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20181202.zip &
   mv plink plink-1.9
 ENV PATH /install:$PATH
 
-#get plink 1.7 & any other packages we want from aptitude
+#get plink 1.7 (note: named plink1 due to name clash)
 RUN sudo apt-get update && \
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq plink && \
   rm -rf /var/lib/apt/lists/*
