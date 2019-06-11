@@ -49,12 +49,10 @@ RUN mkdir /install
 
 WORKDIR /install
 
-# Get plink 1.9
-#install plink
-RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20181202.zip && \
-  unzip plink_linux_x86*.zip && \
-  rm *.zip && \
-  mv plink plink-1.9
+# Get plink2
+RUN wget http://s3.amazonaws.com/plink2-assets/plink2_linux_x86_64_20190527.zip && \
+  unzip plink2_linux_*.zip && \
+  rm *.zip
 ENV PATH /install:$PATH
 
 #get plink 1.7 (note: named plink1 due to name clash)
