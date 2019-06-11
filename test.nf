@@ -34,12 +34,24 @@ process getGeneticMap {
    file genetic_map_tgz
    
    output:
-   file '*.nomono' into genetic_map_dir
+   publishDir "genetic_map", pattern: "*"
    
    """
    tar xfz ${genetic_map_tgz}
+   rm ${genetic_map_tgz}
+   mv -rd */* .
    """
 }
+
+# make channel from getGeneticMap 
+genetic_map_dir = Channel.fromPath('genetic_map')
+# TODO split dbpath inputs into per-chrom objects
+#    .map { file ->
+#        def key = file.name.toString().tokenize('_').get(0)
+#        return tuple(key, file)
+#     }
+#    .groupTuple()
+#    .set{ groups_ch }
 
 process splitChrs {
 
