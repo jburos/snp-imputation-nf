@@ -59,9 +59,8 @@ process splitChrs {
   set val(chromosome), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") into plinkOutChan
 
   """
-  plink1 --noweb --bim ${bimFile} --bed ${bedFile} --fam ${famFile} --chr $chromosome --make-bed --out chr${chromosome}
-  plink1 -bfile chr${chromosome} --list-duplicate-vars ids-only suppress-first
-  [[ -e "plink.dupvar" ]] && plink1 --bfile chr${chromosome} --exclude plink.dupvar --make-bed --out chr${chromosome}
+  plink2 --noweb --bim ${bimFile} --bed ${bedFile} --fam ${famFile} --chr $chromosome --make-bed --out chr${chromosome}
+  plink2 -bfile chr${chromosome} --rm-dup exclude-mismatch list
   """
 
 }
