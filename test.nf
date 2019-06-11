@@ -61,5 +61,29 @@ process splitChrs {
 
 }
 
+process shapeitCheck {
+  validExitStatus 0,1,2
+  errorStrategy 'ignore'
+
+  container 'insilicodb/docker-impute2'
+
+  input:
+  set val(chromosome), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") from perChromChan
+  file db_path from genetic_map_dir
+
+  output:
+  set val(chromosome), file("chr${chromosome}.alignments.log"), file("chr${chromosome}.alignments.snp.strand.exclude"), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") into shapitCheckChan
+
+  script:
+  hapFile = file( db_path.name + "/" + sprintf(params.referenceHapsFilePattern, chromosome) )
+  legendFile = file( db_path.name + "/" + sprintf(params.referenceLegendFilePattern, chromosome) )
+  sampleFile = file( db_path.name + "/" + params.referenceSample )
+
+  """
+  shapeit -check --input-bed chr${chromosome}.bed chr${chromosome}.bim chr${chromosome}.fam --input-ref $hapFile $legendFile $sampleFile --output-log chr${chromosome}.alignments
+  """
+
+}
+
 
 
