@@ -30,8 +30,6 @@ process getGeneticMap {
 
    container 'jackinovik/docker-impute2'
    
-   maxForks 1
-   
    input:
    file genetic_map_tgz
    
@@ -46,8 +44,6 @@ process getGeneticMap {
 process splitChrs {
 
   container 'jackinovik/docker-impute2'
-
-  maxForks 6
 
   input:
   file bedFile from bedFileChan
