@@ -27,36 +27,6 @@ println """\
          """
          .stripIndent()
 
-process getGeneticMap {
-   publishDir path: "${params.outdir}/genetic_map",
-              saveAs: it,
-              mode: 'copy'
-
-   container 'jackinovik/docker-impute2'
-   
-   input:
-   file genetic_map_tgz
-   
-   output:
-   file "*" into genetic_map_files
-   
-   """
-   tar xfz ${genetic_map_tgz}
-   rm ${genetic_map_tgz}
-   mv -rd */* .
-   """
-}
-
-// make channel from getGeneticMap 
-genetic_map_dir = Channel.fromPath("${params.outdir}/genetic_map")
-// TODO split dbpath inputs into per-chrom objects
-//    .map { file ->
-//        def key = file.name.toString().tokenize('_').get(0)
-//        return tuple(key, file)
-//     }
-//    .groupTuple()
-//    .set{ groups_ch }
-
 process splitChrs {
 
   container 'jackinovik/docker-impute2'
