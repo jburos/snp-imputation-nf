@@ -1,4 +1,3 @@
-# the base image to Ubuntu
 FROM ubuntu:16.04
 
 # Update the repository sources list and install samtools package
@@ -49,62 +48,34 @@ RUN pip install gsutil
 RUN mkdir /install
 
 WORKDIR /install
+
 # Get plink 1.9
 #install plink
-# RUN wget https://www.cog-genomics.org/static/bin/plink170113/plink_linux_x86_64.zip
-COPY install/plink_linux_x86_64.zip .
-RUN unzip plink_linux_x86_64.zip -d plink-1.9
-RUN mv plink-1.9/plink plink-1.9/plink-1.9
-ENV PATH /install/plink-1.9:$PATH
+RUN wget http://s3.amazonaws.com/plink1-assets/plink_linux_x86_64_20181202.zip && \
+  unzip plink_linux_x86*.zip && \
+  rm *.zip && \
+  mv plink plink-1.9
+ENV PATH /install:$PATH
 
-COPY install/plink_linux_x86_64_old_1.9.zip .
-RUN unzip plink_linux_x86_64_old_1.9.zip -d plink-1.9-old
-RUN mv plink-1.9-old/plink plink-1.9-old/plink-1.9-old
-ENV PATH /install/plink-1.9-old:$PATH
-
-#get plink 1.7
-# RUN wget https://www.cog-genomics.org/static/bin/plink/plink1_linux_x86_64.zip
-COPY install/plink-1.07-x86_64.zip .
-RUN unzip plink-1.07-x86_64.zip -d plink-1.07
-RUN mv plink-1.07/plink-1.07-x86_64/plink plink-1.07/plink-1.07-x86_64/plink-1.07
-ENV PATH /install/plink-1.07/plink-1.07-x86_64:$PATH
+#get plink 1.7 & any other packages we want from aptitude
+RUN sudo apt-get update && \
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq plink && \
+  rm -rf /var/lib/apt/lists/*
 
 #install shapeit
-# RUN wget https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r837.GLIBCv2.12.Linux.static.tgz
-COPY install/shapeit.v2.r837.GLIBCv2.12.Linux.static.tgz .
-RUN tar -zxvf shapeit.v2.r837.GLIBCv2.12.Linux.static.tgz
+RUN wget https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r837.GLIBCv2.12.Linux.static.tgz && \
+   tar -zxvf shapeit.v2.r837.GLIBCv2.12.Linux.static.tgz
 ENV PATH /install/bin:$PATH
 
 #install impute2
-# RUN wget https://mathgen.stats.ox.ac.uk/impute/impute_v2.3.2_x86_64_static.tgz
-COPY install/impute_v2.3.2_x86_64_static.tgz .
-RUN tar -zxvf impute_v2.3.2_x86_64_static.tgz
+RUN wget https://mathgen.stats.ox.ac.uk/impute/impute_v2.3.2_x86_64_static.tgz && \
+  tar -zxvf impute_v2.3.2_x86_64_static.tgz
 ENV PATH /install/impute_v2.3.2_x86_64_static:$PATH
 
 #Get gtools
-# RUN wget http://www.well.ox.ac.uk/~cfreeman/software/gwas/gtool_v0.7.5_x86_64.tgz
-COPY install/gtool_v0.7.5_x86_64.tgz .
-RUN tar zxvf gtool_v0.7.5_x86_64.tgz
-
-COPY scripts /scripts
-WORKDIR /scripts/lab-files
-RUN npm install
-
-RUN mkdir /reference
-WORKDIR /reference
-COPY reference/23andme.snps.txt .
+RUN wget http://www.well.ox.ac.uk/~cfreeman/software/gwas/gtool_v0.7.5_x86_64.tgz && \
+  tar zxvf gtool_v0.7.5_x86_64.tgz
 
 RUN mkdir /workdir
 WORKDIR /workdir
-
-RUN Rscript -e "install.packages('jsonlite', repos='http://cran.us.r-project.org')"
-#RUN Rscript -e "install.packages('openxlsx', dependencies=TRUE, repos='http://ftp.heanet.ie/mirrors/cran.r-project.org/')"
-#RUN Rscript -e "install.packages('biomaRt', repos='http://cran.us.r-project.org')"
-#R -e 'chooseCRANmirror(graphics=FALSE, ind=87);'
-
-COPY main.nf .
-COPY snp-imputation-labfiles-preprocessing.nf .
-COPY gencove-processing.nf .
-
-RUN apt-get -y install axel
 

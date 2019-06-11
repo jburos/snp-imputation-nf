@@ -24,7 +24,7 @@ println """\
 
 process getGeneticMap {
 
-   container 'insilicodb/docker-impute2'
+   container 'jackinovik/docker-impute2'
    
    maxForks 1
    
@@ -42,7 +42,7 @@ process getGeneticMap {
 
 process plink {
 
-  container 'insilicodb/docker-impute2'
+  container 'jackinovik/docker-impute2'
 
   maxForks 6
 
