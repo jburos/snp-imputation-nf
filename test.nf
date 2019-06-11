@@ -27,7 +27,7 @@ println """\
          """
          .stripIndent()
 
-process splitChrs {
+process rmDups {
 
   container 'jackinovik/docker-impute2'
 
@@ -35,14 +35,31 @@ process splitChrs {
   file bedFile from bedFileChan
   file famFile from famFileChan
   file bimFile from bimFileChan 
+
+  output:
+  set file("cleaned_nodups.bed"), file("cleaned_nodups.fam"), file("cleaned_nodups.bim") into cleanBedFileChan
+  
+  """
+  plink2 --bim ${bimFile} --bed ${bedFile} --fam ${famFile} --rm-dup exclude-mismatch list --make-bed --out step0_excl_mismatch
+  plink2 --bfile step0_excl_mismatch --rm-dup force-first list --make-bed --out cleaned_nodups
+  """
+}
+
+process splitChrs {
+
+  container 'jackinovik/docker-impute2'
+
+  input:
+  file '*.bed' from cleanedBedFileChan
+  file '*.fam' from cleanedBedFileChan
+  file '*.bim' from cleanedBedFileChan 
   each chromosome from chromosomesList 
 
   output:
   set val(chromosome), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") into perChromChan
 
   """
-  plink2 --bim ${bimFile} --bed ${bedFile} --fam ${famFile} --chr $chromosome --make-bed --out chr${chromosome}_pre1
-  plink2 -bfile chr${chromosome}_pre1 --rm-dup exclude-mismatch list --make-bed --out chr${chromosome}
+  plink2 --bfile cleaned_nodups --chr $chromosome --make-bed --out chr${chromosome}
   """
 
 }
