@@ -65,6 +65,5 @@ process splitChrs {
 
 }
 
-perChromChan.subscribe{  println "${it.name}"}
 
 
