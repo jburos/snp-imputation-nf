@@ -74,8 +74,8 @@ process splitChrs {
 }
 
 process shapeitCheck {
-  validExitStatus 0,1,2
-  errorStrategy 'ignore'
+  #validExitStatus 0,1,2
+  #errorStrategy 'ignore'
 
   container 'insilicodb/docker-impute2'
 
