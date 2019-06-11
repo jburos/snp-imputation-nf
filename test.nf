@@ -1,5 +1,6 @@
 params.bedFile = 'TODO'
-// Assume bim/fam files are named along with bedfile
+params.famFile = 'TODO'
+params.bimFile = 'TODO'
 params.geneticMapTgz = 'TODO'
 params.outDir = "imputation-results" 
 params.chromosomeSizesFile = 'b37.chrom.sizes'
@@ -9,6 +10,9 @@ params.referenceGeneticMapPattern = "genetic_map_chr%s_combined_b37.txt"
 params.referenceSample = "ALL.integrated_phase1_v3.20101123.snps_indels_svs.genotypes.sample"
 
 bedFileChan = Channel.fromPath(params.bedFile)
+famFileChan = Channel.fromPath(params.famFile)
+bimFileChan = Channel.fromPath(params.bimFile)
+
 chromosomesList = 1..22
 
 genetic_map_tgz = file(params.geneticMapTgz)
@@ -37,7 +41,6 @@ process getGeneticMap {
    """
    tar xfz ${genetic_map_tgz}
    """
-
 }
 
 process splitChrs {
@@ -48,13 +51,15 @@ process splitChrs {
 
   input:
   file bedFile from bedFileChan
+  file famFile from famFileChan
+  file bimFile from bimFileChan 
   each chromosome from chromosomesList 
 
   output:
   set val(chromosome), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") into plinkOutChan
 
   """
-  plink1 --noweb --bfile ${bedFile.baseName} --chr $chromosome --make-bed --out chr${chromosome}
+  plink1 --noweb --bim ${bimFile} --bed ${bedFile} --fam ${famFile} --chr $chromosome --make-bed --out chr${chromosome}
   plink1 -bfile chr${chromosome} --list-duplicate-vars ids-only suppress-first
   [[ -e "plink.dupvar" ]] && plink1 --bfile chr${chromosome} --exclude plink.dupvar --make-bed --out chr${chromosome}
   """
