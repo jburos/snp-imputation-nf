@@ -74,6 +74,14 @@ ENV PATH /install/impute_v2.3.2_x86_64_static:$PATH
 RUN wget http://www.well.ox.ac.uk/~cfreeman/software/gwas/gtool_v0.7.5_x86_64.tgz && \
   tar zxvf gtool_v0.7.5_x86_64.tgz
 
+# get GenotypeHarmonizer (like liftOver)
+# details: https://github.com/molgenis/systemsgenetics/wiki/Genotype-Harmonize
+RUN wget http://www.molgenis.org/downloads/GenotypeHarmonizer/GenotypeHarmonizer-1.4.20-dist.tar.gz && \
+  gunzip GenotypeHarmonizer*.tar.gz && \
+  tar -xf GenotypeHarmonizer*.tar && \
+  cp GenotypeHarmonizer-*-SNAPSHOT/*.jar /install/
+ENV GENOTYPE_HARMONIZER /install/GenotypeHarmonizer.jar
+
 RUN mkdir /workdir
 WORKDIR /workdir
 
