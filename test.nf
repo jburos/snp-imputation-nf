@@ -56,15 +56,15 @@ process splitChrs {
   each chromosome from chromosomesList 
 
   output:
-  set val(chromosome), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") into plinkOutChan
+  set val(chromosome), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") into perChromChan
 
   """
-  plink2 --noweb --bim ${bimFile} --bed ${bedFile} --fam ${famFile} --chr $chromosome --make-bed --out chr${chromosome}
-  plink2 -bfile chr${chromosome} --rm-dup exclude-mismatch list
+  plink2 --bim ${bimFile} --bed ${bedFile} --fam ${famFile} --chr $chromosome --make-bed --out chr${chromosome}
+  plink2 -bfile chr${chromosome} --rm-dup exclude-mismatch list --make-bed --out chr${chromosome}
   """
 
 }
 
-//plinkOutChan.subscribe{  println "${it.name}"}
+perChromChan.subscribe{  println "${it.name}"}
 
 
