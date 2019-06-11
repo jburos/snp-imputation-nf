@@ -2,7 +2,7 @@ params.bedFile = 'TODO'
 params.famFile = 'TODO'
 params.bimFile = 'TODO'
 params.geneticMapTgz = 'TODO'
-params.outDir = "imputation-results" 
+params.outdir = "imputation-results" 
 params.chromosomeSizesFile = 'b37.chrom.sizes'
 params.referenceHapsFilePattern = "ALL.chr%s.integrated_phase1_v3.20101123.snps_indels_svs.genotypes.nomono.haplotypes.gz"
 params.referenceLegendFilePattern = "ALL.chr%s.integrated_phase1_v3.20101123.snps_indels_svs.genotypes.nomono.legend.gz"
@@ -22,7 +22,7 @@ println """\
          ===================================
          bedfile      : ${params.bedFile}
          geneticMap   : ${params.geneticMapTgz}
-         outdir       : ${params.outDir}
+         outdir       : ${params.outdir}
          """
          .stripIndent()
 
@@ -34,7 +34,7 @@ process getGeneticMap {
    file genetic_map_tgz
    
    output:
-   publishDir "genetic_map", pattern: "*"
+   publishDir "${params.outdir}/genetic_map", pattern: "*"
    
    """
    tar xfz ${genetic_map_tgz}
@@ -44,7 +44,7 @@ process getGeneticMap {
 }
 
 // make channel from getGeneticMap 
-genetic_map_dir = Channel.fromPath('genetic_map')
+genetic_map_dir = Channel.fromPath("${params.outdir}/genetic_map")
 // TODO split dbpath inputs into per-chrom objects
 //    .map { file ->
 //        def key = file.name.toString().tokenize('_').get(0)
