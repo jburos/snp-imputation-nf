@@ -15,7 +15,7 @@ bimFileChan = Channel.fromPath(params.bimFile)
 
 chromosomesList = 1..22
 
-refChannel = Channel.fromPath(params.referenceBase)
+ref_path = Channel.fromPath(params.referenceBase)
 
 println """\
          I M P U T E 2 - N F   P I P E L I N E    
@@ -25,6 +25,31 @@ println """\
          outdir       : ${params.outdir}
          """
          .stripIndent()
+
+process getHaplotypes {
+
+  container 'jackinovik/docker-impute2'
+
+  input:
+  file ref_path
+  each chr from chromosomesList
+
+  output:
+  set val(chr), file('haps.gz'), file('legend.gz'), file('sample') into ref_haplotypes_ch
+
+  script:
+  hapFile = file( ref_path.name + "/" + sprintf(params.referenceHapsFilePattern, chr) )
+  legendFile = file( ref_path.name + "/" + sprintf(params.referenceLegendFilePattern, chr) )
+  sampleFile = file( ref_path.name + "/" + params.referenceSample )
+  
+  """
+  cp $hapFile haps.gz
+  cp $legendFile legend.gz
+  cp $sampleFile sample
+  """
+
+}
+
 
 process rmDups {
 
@@ -64,7 +89,7 @@ process splitChrs {
   each chromosome from chromosomesList 
 
   output:
-  set val(chromosome), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") into perChrom
+  set val(chromosome), file("chr${chromosome}.bed"), file("chr${chromosome}.bim"), file("chr${chromosome}.fam") into perChrom
 
   """
   plink2 --fam $fam --bed $bed --bim $bim --chr $chromosome --make-bed --out chr${chromosome}
@@ -76,7 +101,7 @@ process harmonizeGenotypes {
   container 'jackinovik/docker-impute2'
   
   input:
-  set val(chromosome), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") from perChrom 
+  set val(chromosome), file(bed), file(bim), file(fam) from perChrom 
   
   output:
   set val(chromosome), file("chr${chromosome}_aligned.bed"), file("chr${chromosome}_aligned.bim"), file("chr${chromosome}_aligned.fam") into perChromAligned
@@ -86,11 +111,13 @@ process harmonizeGenotypes {
   wget "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr${chromosome}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz"
   wget "ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.chr${chromosome}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes.vcf.gz.tbi"
   # run genotypeHarmonizer
-  java -Xmx40g -jar /install/GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input chr${chromosome} --update-id --outputType PLINK_BED --output chr${chromosome}_aligned --refType VCF --ref ALL.chr${chromosome}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes --ambiguousSnpFilter --check-ld --update-reference-allele
+  java -Xmx40g -jar /install/GenotypeHarmonizer-1.4.20-SNAPSHOT/GenotypeHarmonizer.jar --inputType PLINK_BED --input $bed.baseName --update-id --outputType PLINK_BED --output chr${chromosome}_aligned --refType VCF --ref ALL.chr${chromosome}.phase3_shapeit2_mvncall_integrated_v5a.20130502.genotypes --ambiguousSnpFilter --check-ld --update-reference-allele
   # remove vcf to conserve disk space
   rm *.vcf.gz*
   """
 }
+
+shapeit_inputs = perChromAligned.join(ref_haplotypes_ch)
 
 process shapeitCheck {
   validExitStatus 0
@@ -99,19 +126,13 @@ process shapeitCheck {
   container 'jackinovik/docker-impute2'
 
   input:
-  set val(chromosome), file("chr${chromosome}_aligned.bed"), file("chr${chromosome}_aligned.bim"), file("chr${chromosome}_aligned.fam") from perChromAligned
-  file db_path from refChannel
+  set val(chromosome), file(bed), file(bim), file(fam), file(haps), file(legend), file(sample) from shapeit_inputs
 
   output:
-  set val(chromosome), file("chr${chromosome}.alignments.log"), file("chr${chromosome}.alignments.snp.strand.exclude"), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") into shapitCheckChan
-
-  script:
-  hapFile = file( db_path.name + "/" + sprintf(params.referenceHapsFilePattern, chromosome) )
-  legendFile = file( db_path.name + "/" + sprintf(params.referenceLegendFilePattern, chromosome) )
-  sampleFile = file( db_path.name + "/" + params.referenceSample )
+  set val(chromosome), file(bed), file(bim), file(fam), file(haps), file(legend), file(sample), file("chr${chromosome}.alignments.log"), file("chr${chromosome}.alignments.snp.strand.exclude")  into shapeitCheckChan
 
   """
-  shapeit -check --input-bed chr${chromosome}_aligned.bed chr${chromosome}_aligned.bim chr${chromosome}_aligned.fam --input-ref $hapFile $legendFile $sampleFile --output-log chr${chromosome}.alignments
+  shapeit -check --input-bed $bed $bim $fam --input-ref $haps $legend $sample --output-log chr${chromosome}.alignments
   """
 
 }
