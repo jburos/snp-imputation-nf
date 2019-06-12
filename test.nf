@@ -79,7 +79,7 @@ process harmonizeGenotypes {
   set val(chromosome), file("chr${chromosome}.bed"), file("chr${chromosome}.fam"), file("chr${chromosome}.bim") from perChrom 
   
   output:
-  set val(chromosome), file("chr${chromosome}_aligned.*") into perChromAligned
+  set val(chromosome), file("chr${chromosome}_aligned.bed"), file("chr${chromosome}_aligned.fam"), file("chr${chromosome}_aligned.bim") into perChromAligned
 
   """
   # download VCF file from 1000GP phase3
@@ -99,7 +99,7 @@ process shapeitCheck {
   container 'jackinovik/docker-impute2'
 
   input:
-  set val(chromosome), file("chr${chromosome}_aligned.*") from perChromAligned
+  set val(chromosome), file("chr${chromosome}_aligned.bed"), file("chr${chromosome}_aligned.bim"), file("chr${chromosome}_aligned.fam") from perChromAligned
   file db_path from refChannel
 
   output:
