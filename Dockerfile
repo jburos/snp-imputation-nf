@@ -61,8 +61,8 @@ RUN sudo apt-get update && \
   rm -rf /var/lib/apt/lists/*
 
 #install shapeit
-RUN wget https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r837.GLIBCv2.12.Linux.static.tgz && \
-   tar -zxvf shapeit.v2.r837.GLIBCv2.12.Linux.static.tgz
+RUN wget https://mathgen.stats.ox.ac.uk/genetics_software/shapeit/shapeit.v2.r904.glibcv2.12.linux.tar.gz && \
+   tar -zxvf shapeit.v2.r904.glibcv2.12.linux.tar.gz
 ENV PATH /install/bin:$PATH
 
 #install impute2
