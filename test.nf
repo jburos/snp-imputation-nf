@@ -133,6 +133,9 @@ process shapeitCheck {
 
   """
   shapeit -check --input-bed $bed $bim $fam --input-ref $haps $legend $sample --output-log chr${chromosome}.alignments
+  if [ ! -f "chr${chromosome}.alignments.snp.strand.exclude" ]; then
+    touch chr${chromosome}.alignments.snp.strand.exclude
+  fi
   """
 
 }
