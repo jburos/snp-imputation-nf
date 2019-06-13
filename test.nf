@@ -35,17 +35,19 @@ process getHaplotypes {
   each chr from chromosomesList
 
   output:
-  set val(chr), file('haps.gz'), file('legend.gz'), file('sample') into ref_haplotypes_ch
+  set val(chr), file('haps.gz'), file('legend.gz'), file('sample'), file('map') into ref_haplotypes_ch
 
   script:
   hapFile = file( ref_path.name + "/" + sprintf(params.referenceHapsFilePattern, chr) )
   legendFile = file( ref_path.name + "/" + sprintf(params.referenceLegendFilePattern, chr) )
   sampleFile = file( ref_path.name + "/" + params.referenceSample )
-  
+  mapFile = file( ref_path.name + "/" + sprintf(params.referenceGeneticMapPattern, chr) )
+
   """
   cp $hapFile haps.gz
   cp $legendFile legend.gz
   cp $sampleFile sample
+  cp $mapFile map
   """
 
 }
@@ -126,10 +128,10 @@ process shapeitCheck {
   container 'jackinovik/docker-impute2'
 
   input:
-  set val(chromosome), file(bed), file(bim), file(fam), file(haps), file(legend), file(sample) from shapeit_inputs
+  set val(chromosome), file(bed), file(bim), file(fam), file(haps), file(legend), file(sample), file(map) from shapeit_inputs
 
   output:
-  set val(chromosome), file(bed), file(bim), file(fam), file(haps), file(legend), file(sample), file("chr${chromosome}.alignments.log"), file("chr${chromosome}.alignments.snp.strand.exclude")  into shapeitCheckChan
+  set val(chromosome), file(bed), file(bim), file(fam), file(haps), file(legend), file(sample), file(map), file("chr${chromosome}.alignments.log"), file("chr${chromosome}.alignments.snp.strand.exclude") into shapeitCheckChan
 
   """
   shapeit -check --input-bed $bed $bim $fam --input-ref $haps $legend $sample --output-log chr${chromosome}.alignments
@@ -140,5 +142,21 @@ process shapeitCheck {
 
 }
 
+
+process shapeit {
+
+  container 'jackinovik/docker-impute2'
+
+  input:
+  set val(chromosome), file(bed), file(bim), file(fam), file(haps), file(legend), file(sample), file(map), file(log), file(exclude) from shapeitCheckChan
+
+  output:
+  set val(chromosome), file("chr${chromosome}.phased.haps"), file("chr${chromosome}.phased.sample") into shapeitChan
+
+  """
+  shapeit --input-bed $bed $bim $fam --input-ref $haps $legend $sample --exclude-snp $exclude --input-map $map -O chr${chromosome}.phased 
+  """
+
+}
 
 
