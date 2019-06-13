@@ -194,4 +194,45 @@ process impute2 {
   """
 }
 
+// ----==== utility methods ====----
+
+
+def getChromosomeSize( chromosomeSizesFile, chromosome ) {
+
+    def result = 0
+
+    chromosomeSizesFile.splitEachLine("\t") {fields ->
+
+        def genomeId
+        def path
+	if ( fields[0].trim() == "${chromosome}" ) {
+          //println "in if"
+          result = fields[1].trim().toInteger()
+          return 
+        }
+
+    }
+
+    result
+}
+
+
+def getChromosomeChunkPairs ( chromosomeSize, chunkSize=5000000 ) {
+
+  def result = []
+  def numberOfChunks = chromosomeSize / chunkSize
+  def remainder = chromosomeSize % chunkSize
+ 
+  1.upto(numberOfChunks) {
+    endPosition = it * chunkSize
+    startPosition = (endPosition - chunkSize) + 1
+    result = result + [[startPosition, endPosition ]]
+  }
+
+  if ( remainder > 0 ) {
+    result = result + [[endPosition + 1 , endPosition + remainder ]]
+  }
+  
+  result
+}
 
