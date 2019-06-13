@@ -151,12 +151,47 @@ process shapeit {
   set val(chromosome), file(bed), file(bim), file(fam), file(haps), file(legend), file(sample), file(map), file(log), file(exclude) from shapeitCheckChan
 
   output:
-  set val(chromosome), file("chr${chromosome}.phased.haps"), file("chr${chromosome}.phased.sample") into shapeitChan
+  set val(chromosome), file("chr${chromosome}.phased.haps"), file("chr${chromosome}.phased.sample"), file(haps), file(legend), file(map) into shapeitChan
 
   """
   shapeit --input-bed $bed $bim $fam --input-ref $haps $legend $sample --exclude-snp $exclude --input-map $map -O chr${chromosome}.phased 
   """
 
+}
+
+imputePerChunkChannel = shapeitChan.flatMap { chromosome, chrHaps, chrSample, refHaps, refLegend, map ->
+   def results = []
+   
+   def chunks = getChromosomeChunkPairs(getChromosomeSize(file(params.chromosomeSizesFile), chromosome))
+   
+   chunks.each { chunkStart, chunkEnd -> 
+     results.push( [ chromosome, chrHaps, chrSample, chunkStart, chunkEnd, refHaps, refLegend, map] )
+   }
+   
+   return results 
+}
+
+process impute2 {
+
+  errorStrategy 'ignore'
+
+  container 'jackinovik/docker-impute2'
+
+  input:
+  set val(chromosome), file(chrHaps), file(chrSample), val(chunkStart), val(chunkEnd), file(refHaps), file(refLegend), file(map) from imputePerChunkChannel
+
+  output:
+  set val(chromosome), file("chr${chromosome}-${chunkStart}-${chunkEnd}.imputed") into impute2Chan
+
+  """
+  impute2 -use_prephased_g -known_haps_g $chrHaps -h $refHaps -l $refLegend -m $map -int $chunkStart $chunkEnd -Ne 20000 -o chr${chromosome}-${chunkStart}-${chunkEnd}.imputed
+  
+  #sometimes there are no SNP's in a region
+  if [ ! -f "chr${chromosome}-${chunkStart}-${chunkEnd}.imputed" ]; then
+    touch "chr${chromosome}-${chunkStart}-${chunkEnd}.imputed";
+  fi
+  
+  """
 }
 
 
