@@ -121,6 +121,7 @@ shapeit_inputs = perChromAligned.join(ref_haplotypes_ch)
 
 process shapeitCheck {
   validExitStatus 0
+  errorStrategy 'ignore'
 
   container 'jackinovik/docker-impute2'
 
