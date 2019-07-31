@@ -194,6 +194,44 @@ process impute2 {
   """
 }
 
+impute2List = impute2Chan.toSortedList() //gives a dataFlow instance, nee to get the val property of it
+impute2List = impute2List.val
+
+impute2Map = [:]
+
+impute2List.each { chrom, file ->
+
+  if ( !impute2Map.containsKey(chrom) ) {
+   impute2Map.put(chrom, [])
+  }
+  impute2Map.get(chrom).add(file)
+
+}
+
+impute2MapChannel = Channel.create()
+
+impute2Map.each { chrom, fileList ->
+  impute2MapChannel.bind([chrom, fileList])
+}
+
+impute2MapChannel.close()
+
+process impute2Concat {
+  
+  publishDir params.outDir
+ 
+  input:
+  set val(chromosome), file(imputedFiles) from impute2MapChannel
+
+  output:
+  set val(chromosome), file("chr${chromosome}.imputed") into impute2ConcatChan
+
+  """
+  cat $imputedFiles > chr${chromosome}.imputed
+  """
+}
+
+
 // ----==== utility methods ====----
 
 
